@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>PIX - QR Code</title>
+
+  <style>
+    * {
+      border: 0;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      color: #0e1a3a;
+      display: flex;
+      justify-content: center;
+    }
+
+    form {
+      display: flex;
+      gap: 8px;
+      flex-direction: column;
+      max-width: 420px;
+      border-radius: 12px;
+      padding: 6px;
+      width: 100%;
+    }
+
+    .info-pix {
+      font-size: 16px;
+      background-color: #f8fc26;
+      padding: 2px 4px;
+      text-align: center;
+    }
+
+    .cont-url {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    form input {
+      border-radius: 8px;
+      border: 1px solid #0a2392;
+      padding: 10px 12px;
+      font-size: 14px;
+      outline: none;
+      width: 100%;
+    }
+
+    form > input:focus {
+      box-shadow: 0 0 0 3px rgba(33, 63, 196, .15);
+      border-color: #213fc4;
+    }
+
+    .metodo-pagamento {
+      display: flex;
+      gap: 10px;
+    }
+
+    .metodo-pagamento input {
+      display: none;
+      border: 2px solid #ccc;
+      padding: 10px 20px;
+    }
+
+    .metodo-pagamento label {
+      padding: 10px 8px;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .metodo-pagamento input:checked + span {
+      padding: 10px 20px;
+      background: #213fc5;
+      color: white;
+      border-radius: 4px;
+      padding: 5px 10px;
+    }
+
+    small.hint {
+      color: #0a2392;
+      opacity: 0.8;
+      margin-top: -6px;
+      margin-bottom: 6px;
+    }
+
+    button {
+      padding: 10px 12px;
+      background-color: #213fc4;
+      border-radius: 8px;
+      border: 1px solid #0a2392;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    button:hover:not(:disabled) {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      background-color: #a7b1f1;
+      border-color: #7e8ce0;
+      color: #f1f3ff;
+      cursor: not-allowed;
+      filter: none;
+      transform: none;
+      opacity: 0.9;
+    }
+
+    .cont-qrcode {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #qrcode {
+      margin-top: 10px;
+      width: 160px;
+      height: 160px;
+    }
+
+    #pix-payload-area {
+      margin-top: 2px;
+      max-width: 420px;
+      display: none; /* aparece quando gerar o QR */
+    }
+
+    #pix-payload-area label {
+      display: inline-block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      color: #0a2392;
+      font-weight: 600;
+    }
+
+    #pix-payload {
+      width: 100%;
+      padding: 5px 6px;
+      border: 1px solid #0a2392;
+      border-radius: 8px;
+      font-size: 12px;
+      resize: vertical;
+      background: #fff;
+      color: #0e1a3a;
+      cursor: pointer;            /* <<< ADIÇÃO: indica que é clicável */
+      user-select: all;           /* <<< ADIÇÃO: facilita selecionar em fallback */
+    }
+
+    #copiar-btn {
+      margin-top: 2px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background-color: #213fc4;
+      border: 1px solid #0a2392;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    #copiar-btn.copiado {
+      background-color: #2aa745;
+      border-color: #1d7f33;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .popup-container {
+      position: absolute;
+      background-color: #cfcfcf6c;
+      width: 100%;
+      top: 0;
+      bottom: 0;
+      z-index: 10;
+      padding: 10px 16px;
+    }
+
+    .popup-container:target {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .popup {
+      border: 2px solid rgb(65, 65, 65);
+      border-radius: 10px;
+      padding: 8px;
+      background-color: #b0b9f2;
+      color: black;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 800px;
+      width: 100%;
+      align-items: center;
+      margin: 10px;
+      overflow-y: scroll;
+      height: 95vh;
+      max-height: 600px;
+    }
+
+    .popup a {
+      position: sticky;
+      top: 10px;
+      font-size: 20px;
+      padding: 4px 20px;
+      background-color: #5e7bff;
+      border-radius: 6px;
+      color: #fff;
+      border: 1px solid #3f52a7;
+    }
+
+    .popup a:hover {
+      background-color: #3f52a7;
+      transition: all;
+      animation-delay: 6s;
+    }
+
+    .content-popup {
+      display: flex;
+      flex-direction: column;
+      max-width: 600px;
+      gap: 8px;
+      font-size: 14px;
+      padding: 8px 0;
+    }
+
+    .content-popup h1 {
+      font-size: 16px;
+    }
+
+    .content-popup img {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="popup-container hidden" id="popup">
+    <div class="popup">
+      <a href="#">FECHAR</a>
+      <div class="content-popup">
+        <h1>Para gerar o QRCode pix segue o passo a passo</h1>
+        <!-- <span>Passo 1 - Selecione a opção PIX</span>
+        <img src="https://raw.githubusercontent.com/TI-Atlantis/qrcode-pix/refs/heads/main/Screenshot_1.jpg" alt="Selecione a opção PIX"> -->
+        <span>Passo 1 - Copie o link completo deste site</span>
+        <img src="https://raw.githubusercontent.com/TI-Atlantis/qrcode-pix/refs/heads/main/imagem%20(4).png" alt="Copie o link completo deste site">
+        <span>Passo 2 - Cole o link no campo "Link do site" e preencha os dados de E-mail e CNPJ para envio de NFS e boleto</span>
+        <img src="https://raw.githubusercontent.com/TI-Atlantis/qrcode-pix/refs/heads/main/imagem%20(3).png" alt="Cole o link no campo Link do site e preencha os dados de E-mail e CNPJ para envio de NFS e boleto">
+      </div>
+    </div>
+  </div>
+  <form id="form" novalidate>
+    
+    <div class="metodo-pagamento hidden">
+      <label>
+        <input type="radio" name="gerar" value="pix">
+        <span>Pix</span>
+      </label>
+      
+      <label>
+        <input type="radio" name="gerar" value="boleto">
+        <span>Boleto</span>
+      </label>
+    </div>
+    
+    <label for="" class=" cont-url" id="cont-url">
+      <a class="info-pix" href="#popup">Clique aqui para saber como gerar o Pix</a>
+      <input type="text" id="url" name="input" placeholder="Link do site" autocomplete="off" />
+      <small class="hint">Ex.: https://www.terminalonline.com.br/ThirdParty/...</small>
+    </label>
+
+    <input type="email" id="email" name="email" placeholder="Email" autocomplete="email" required/>
+    <input type="text" id="cnpj" name="cnpj" placeholder="CNPJ" autocomplete="off" required/>
+
+    <!-- BOTÃO INICIA DESABILITADO -->
+    <button type="submit" id="button" disabled>Gerar</button>
+  </form>
+
+  <div class="cont-qrcode">
+    <div id="qrcode" class="hidden" aria-label="QR Code PIX"></div>
+    
+    <!-- Área de copia-e-cola do payload do PIX -->
+    <div id="pix-payload-area">
+      <label for="pix-payload">Código PIX (clique para copiar):</label>
+      <textarea id="pix-payload" rows="4" readonly title="Clique para copiar o código"></textarea>
+    </div>
+  </div>
+    
+  <!-- Lib de QRCode -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <script>
+    // ========= Utilidades =========
+    function limparTexto(str) {
+      return (str || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^A-Z0-9 ]/gi, '')
+        .toUpperCase()
+        .slice(0, 25);
+    }
+
+    function crc16(payload) {
+      let crc = 0xFFFF;
+      for (let i = 0; i < payload.length; i++) {
+        crc ^= payload.charCodeAt(i) << 8;
+        for (let j = 0; j < 8; j++) {
+          if (crc & 0x8000) crc = (crc << 1) ^ 0x1021;
+          else crc <<= 1;
+          crc &= 0xFFFF;
+        }
+      }
+      return crc.toString(16).toUpperCase().padStart(4, '0');
+    }
+
+    function gerarPayloadPix({ chavePix, valor, descricao, nomeEmpresa, cidade = 'SAO PAULO' }) {
+      const nome = limparTexto(nomeEmpresa);
+      const city = limparTexto(cidade);
+      const valorFormatado = Number(valor).toFixed(2);
+
+      // TXID sem espaços
+      const txid = limparTexto(descricao).replace(/\s+/g, '').slice(0, 25) || 'PAGAMENTO';
+
+      const merchantAccount =
+        '0014BR.GOV.BCB.PIX' +
+        '01' + String(chavePix.length).padStart(2, '0') + chavePix;
+
+      const payloadSemCRC =
+        '000201' +
+        '010212' +
+        '26' + String(merchantAccount.length).padStart(2, '0') + merchantAccount +
+        '52040000' +
+        '5303986' +
+        '54' + String(valorFormatado.length).padStart(2, '0') + valorFormatado +
+        '5802BR' +
+        '59' + String(nome.length).padStart(2, '0') + nome +
+        '60' + String(city.length).padStart(2, '0') + city +
+        '62' + String((txid.length + 4)).padStart(2, '0') +
+          '05' + String(txid.length).padStart(2, '0') + txid +
+        '6304';
+
+      const crc = crc16(payloadSemCRC);
+      return payloadSemCRC + crc;
+    }
+
+    function gerarQrPix(valor, container, chavePixDepot, empresa, city) {
+      // Escolha o valor a usar: real da API ou fixo
+      const valorUsado = valor; // <- Use o valor retornado pela API
+
+      const payload = gerarPayloadPix({
+        chavePix: chavePixDepot,
+        valor: valorUsado,
+        descricao: container,
+        nomeEmpresa: empresa,
+        cidade: city
+      });
+
+      // Gera o QR Code
+      const qrDiv = document.getElementById('qrcode');
+      qrDiv.innerHTML = '';
+      new QRCode(qrDiv, {
+        text: payload,
+        width: 160,
+        height: 160
+      });
+
+      // Mostra e preenche a área "PIX copia e cola"
+      const payloadArea = document.getElementById('pix-payload-area');
+      const textarea = document.getElementById('pix-payload');
+      textarea.value = payload;
+      payloadArea.style.display = 'block';
+
+      // console.log('Payload PIX válido:', payload);
+    }
+
+    // ========= Validação e controle de botão =========
+    const form = document.getElementById('form');
+    const radios = document.querySelectorAll('input[name="gerar"]');
+    const labelUrl = document.getElementById('cont-url');
+    const urlInput = document.getElementById('url');
+    const emailInput = document.getElementById('email');
+    const cnpjInput = document.getElementById('cnpj');
+    const submitBtn = document.getElementById('button');
+
+    function validaURLComThirdParty(str) {
+      if (!str) return false;
+      // precisa conter .../ThirdParty/{cod1}/{cod2}/{cod3}
+      const m = str.match(/ThirdParty\/([^/]+)\/([^/]+)\/([^/]+)/);
+      return !!m;
+    }
+
+    function validarFormulario() {
+      // const selecionado = document.querySelector('input[name="gerar"]:checked')?.value;
+      const selecionado = "pix"
+      const emailOk = !!emailInput.value.trim(); // input type="email" já ajuda no formato
+      const cnpjOk = !!cnpjInput.value.trim();
+
+      // Só exige URL se for PIX
+      const urlOk = (selecionado === "pix")
+        ? validaURLComThirdParty(urlInput.value.trim())
+        : true;
+
+      const valido = urlOk && emailOk && cnpjOk && !!selecionado;
+      submitBtn.disabled = !valido;
+
+      return valido;
+    }
+
+    [emailInput, cnpjInput].forEach(el => {
+      el.addEventListener('input', validarFormulario);
+      el.addEventListener('blur', validarFormulario);
+    });
+
+
+    // =============== Salvar dados =================
+    function salve_data(total, container) {
+      const params = new URLSearchParams(window.location.search);
+      const inspection = params.get("date")
+      const emailValue = document.getElementById('email').value;
+      const cnpjValue = document.getElementById('cnpj').value;
+
+      console.log(inspection)
+      console.log(emailValue)
+      console.log(cnpjValue)
+      console.log(container)
+      console.log(total)
+    }
+
+
+    // ========= Chamada de API =========
+    async function api_url(cod1, cod2, cod3) {
+      const res = await fetch(`https://purcell.terminalonline.com.br/Importer?c=${cod2}&d=${cod3}&k=${cod1}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      const keys = {
+        "916F4EBC4B1D0C73D7B5AE90A3C15B4CA299862837A0D075": "pix@atlantis-gja.com.br",
+        "916F4EBC4B1D0C7393C08B672E51BE06A6AB87174320FF62": "pix@atlantis-pga.com.br",
+        "916F4EBC4B1D0C739FD7A4DD12DCB7DB742DE60BE168C357": "pix@atlantis-nav.com.br",
+      }
+
+      const citys = {
+        "pix@atlantis-gja.com.br": "GUARUJÁ",
+        "pix@atlantis-nav.com.br": "NAVEGANTES",
+        "pix@atlantis-pga.com.br": "PARANAGUÁ"
+      }
+
+      const pix = keys[cod3]
+      const city = citys[pix]
+
+      const cods = await res.json();
+
+      let resultsJson;
+      try {
+        resultsJson = JSON.parse(cods.results);
+      } catch (e) {
+        console.error('Erro ao parsear results:', cods.results);
+        throw new Error('Não foi possível interpretar a resposta da API.');
+      }
+
+      const total = resultsJson.Items?.reduce((soma, item) => soma + (Number(item?.Price) || 0), 0) ?? 0;
+      const container = resultsJson.Cntr;
+      const empresa = resultsJson.Carrier;
+
+      if (!total || !container) {
+        console.error('Dados insuficientes para gerar PIX:', resultsJson);
+        throw new Error('API não retornou valor/container.');
+      }
+
+      // console.log('Valor:', total, 'Container:', container);
+      gerarQrPix(total, container, pix, empresa, city);
+      salve_data(total, container);
+    }
+
+    // ========= Submit =========
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const valid = validarFormulario()
+
+      if (!valid) {
+        alert('Preencha todos os campos corretamente para gerar o QR Code.');
+        return;
+      }
+
+      // Desabilita o botão durante a requisição
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Gerando...';
+
+      try {
+        const valorURL = urlInput.value.trim();
+        const params = new URLSearchParams(window.location.search);
+
+        const inspection = params.get("date")
+        // const selecionado = document.querySelector('input[name="gerar"]:checked')?.value;
+        const selecionado = "pix"
+
+        if (selecionado === "pix") {
+          const match = valorURL.match(/ThirdParty\/([^/]+)\/([^/]+)\/([^/]+)/);
+          
+          if (!match) {
+            alert('A URL precisa conter o padrão ThirdParty/{cod1}/{cod2}/{cod3}.');
+            return;
+          }
+
+          const codigo1 = match[1];
+          const codigo2 = match[2];
+          const codigo3 = match[3];
+          
+          await api_url(codigo1, codigo2, codigo3);
+
+          // Limpa o formulário ao concluir com sucesso
+          form.reset();
+          validarFormulario(); // mantém o botão desabilitado até novo preenchimento
+          urlInput.focus();
+          form.classList.add("hidden");
+          
+          const qrDiv = document.getElementById('qrcode');
+          qrDiv.classList.remove("hidden");
+        }
+
+      } catch (err) {
+        console.error(err);
+        alert('Ocorreu um erro ao gerar o QR Code. Tente novamente.');
+      } finally {
+        // Restaura o texto do botão; habilitação é controlada pela validação
+        submitBtn.textContent = 'Gerar';
+      }
+    });
+
+    function atualizarVisibilidade() {
+      const selecionado = document.querySelector('input[name="gerar"]:checked')?.value;
+
+      // Esconde quando for boleto, mostra quando for pix
+      if (selecionado === 'boleto') {
+        labelUrl.classList.add('hidden');
+      } else {
+        labelUrl.classList.remove('hidden');
+      }
+    }
+
+    radios.forEach(r => r.addEventListener('change', atualizarVisibilidade));
+
+
+    // ========= Copiar ao clicar na área do código (SEM botão) =========
+    (function enableClickToCopyArea() {
+      const area = document.getElementById('pix-payload-area');
+      const textarea = document.getElementById('pix-payload');
+
+      async function copiar() {
+        if (!textarea.value) return;
+
+        // Seleciona tudo (bom para fallback e feedback visual)
+        textarea.focus();
+        textarea.select();
+        textarea.setSelectionRange(0, textarea.value.length);
+
+        try {
+          await navigator.clipboard.writeText(textarea.value);
+        } catch (e) {
+          // Fallback para navegadores antigos
+          if (document.execCommand) {
+            document.execCommand('copy');
+          } else {
+            alert('Não foi possível copiar automaticamente. Selecione e copie manualmente.');
+          }
+        }
+      }
+
+      // Clique em qualquer lugar da área (label/textarea)
+      area.addEventListener('click', copiar);
+      // Previne que o duplo clique manche o texto (opcional)
+      area.addEventListener('mousedown', (ev) => {
+        // Permite seleção normal dentro do textarea
+        if (ev.target.id !== 'pix-payload') {
+          ev.preventDefault();
+        }
+      });
+    })();
+
+    // Estado inicial do botão
+    validarFormulario();
+  </script>
+  <!-- <iframe src="https://ti-atlantis.github.io/qrcode-pix/?date={INSPECTION}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads" allow="fullscreen" scrolling="no" frameborder="0" style="width: 100%; overflow: hidden; border: 0; min-height: 300px"></iframe> -->
+</body>
+</html>
