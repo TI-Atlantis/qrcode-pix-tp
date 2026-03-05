@@ -462,8 +462,12 @@
       const cods = await res.json();
 
       let resultsJson;
+
+
       try {
         resultsJson = JSON.parse(cods.results);
+
+        console.log(resultsJson)
       } catch (e) {
         console.error('Erro ao parsear results:', cods.results);
         throw new Error('Não foi possível interpretar a resposta da API.');
@@ -500,9 +504,9 @@
 
       try {
         const valorURL = urlInput.value.trim();
-        const params = new URLSearchParams(window.location.search);
+        // const params = new URLSearchParams(window.location.search);
 
-        const inspection = params.get("date")
+        // const inspection = params.get("date")
         // const selecionado = document.querySelector('input[name="gerar"]:checked')?.value;
         const selecionado = "pix"
 
@@ -592,6 +596,6 @@
     // Estado inicial do botão
     validarFormulario();
   </script>
-  <!-- <iframe src="https://ti-atlantis.github.io/qrcode-pix/?date={INSPECTION}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads" allow="fullscreen" scrolling="no" frameborder="0" style="width: 100%; overflow: hidden; border: 0; min-height: 300px"></iframe> -->
+  <!-- <iframe src="https://69a9bb7f9b33b68f93a2b5dd--inquisitive-pavlova-0a1d5e.netlify.app/?date='{INSPECTION}'" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads" allow="fullscreen" scrolling="no" frameborder="0" style="width: 100%; overflow: hidden; border: 0; min-height: 300px"></iframe> -->
 </body>
 </html>
