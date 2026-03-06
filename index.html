@@ -423,17 +423,12 @@
 
 
     // =============== Salvar dados =================
-    function salve_data(total, container) {
+    function salve_data(total, container, depot) {
       const params = new URLSearchParams(window.location.search);
       const inspection = params.get("date")
       const emailValue = document.getElementById('email').value;
       const cnpjValue = document.getElementById('cnpj').value;
 
-      console.log(inspection)
-      console.log(emailValue)
-      console.log(cnpjValue)
-      console.log(container)
-      console.log(total)
     }
 
 
@@ -444,30 +439,25 @@
         headers: { 'Accept': 'application/json' }
       });
 
-      const keys = {
-        "916F4EBC4B1D0C73D7B5AE90A3C15B4CA299862837A0D075": "pix@atlantis-gja.com.br",
-        "916F4EBC4B1D0C7393C08B672E51BE06A6AB87174320FF62": "pix@atlantis-pga.com.br",
-        "916F4EBC4B1D0C739FD7A4DD12DCB7DB742DE60BE168C357": "pix@atlantis-nav.com.br",
-      }
-
       const citys = {
-        "pix@atlantis-gja.com.br": "GUARUJÁ",
-        "pix@atlantis-nav.com.br": "NAVEGANTES",
-        "pix@atlantis-pga.com.br": "PARANAGUÁ"
+        "916F4EBC4B1D0C73D7B5AE90A3C15B4CA299862837A0D075": "GUARUJÁ",
+        "916F4EBC4B1D0C7393C08B672E51BE06A6AB87174320FF62": "PARANAGUÁ",
+        "916F4EBC4B1D0C739FD7A4DD12DCB7DB742DE60BE168C357": "NAVEGANTES",
       }
 
-      const pix = keys[cod3]
-      const city = citys[pix]
+      const keys = {
+        "GUARUJÁ": "recebimentos@atlantis-gja.com.br",
+        "PARANAGUÁ": "recebimentos@atlantis-pga.com.br",
+        "NAVEGANTES": "recebimentos@atlantis-nav.com.br"
+      }
 
+      const city = citys[cod3]
+      const pix = keys[city]
       const cods = await res.json();
 
       let resultsJson;
-
-
       try {
         resultsJson = JSON.parse(cods.results);
-
-        console.log(resultsJson)
       } catch (e) {
         console.error('Erro ao parsear results:', cods.results);
         throw new Error('Não foi possível interpretar a resposta da API.');
@@ -484,7 +474,7 @@
 
       // console.log('Valor:', total, 'Container:', container);
       gerarQrPix(total, container, pix, empresa, city);
-      salve_data(total, container);
+      salve_data(total, container, city);
     }
 
     // ========= Submit =========
@@ -596,6 +586,6 @@
     // Estado inicial do botão
     validarFormulario();
   </script>
-  <!-- <iframe src="https://69a9bb7f9b33b68f93a2b5dd--inquisitive-pavlova-0a1d5e.netlify.app/?date='{INSPECTION}'" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads" allow="fullscreen" scrolling="no" frameborder="0" style="width: 100%; overflow: hidden; border: 0; min-height: 300px"></iframe> -->
+  <!-- <iframe src="https://ti-atlantis.github.io/qrcode-pix-tp/?date='{INSPECTION}'" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads" allow="fullscreen" scrolling="no" frameborder="0" style="width: 100%; overflow: hidden; border: 0; min-height: 300px"></iframe> -->
 </body>
 </html>
